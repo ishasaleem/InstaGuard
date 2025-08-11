@@ -6,7 +6,7 @@ from bson.errors import InvalidId
 from flask_cors import cross_origin
 from dotenv import load_dotenv
 from routes.extract_features import extract_features
-from routes.real_accounts import REAL_BLOCKED_ACCOUNTS  
+from routes.real_accounts import REAL_BLOCKED_ACCOUNTS
 import pandas as pd
 import joblib
 import jwt
@@ -112,9 +112,11 @@ def predict(user):
         if not username:
             return jsonify({"error": "Username is required"}), 400
 
-        # ✅ Check if it's a known real account
+        # ✅ Check if it's a known real account with restriction
         if username in REAL_BLOCKED_ACCOUNTS:
-            logger.info(f"[Known Real Account] @{username} recognized as verified.")
+            restriction_reason = REAL_BLOCKED_ACCOUNTS[username]
+            logger.info(f"[Known Real Account] @{username} is real but restricted. Reason: {restriction_reason}")
+
             result_data = {
                 "user_id": str(user["_id"]),
                 "username": username,
@@ -122,17 +124,20 @@ def predict(user):
                 "prediction": "Real",
                 "model_version": MODEL_VERSION,
                 "confidence": 1.0,
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.utcnow(),
+                "note": restriction_reason
             }
             results_collection.insert_one(result_data)
 
             return jsonify({
                 "username": username,
-                "prediction": "Real (Known Verified Account)",
+                "prediction": "Real",
                 "confidence": 1.0,
-                "message": "This is a verified real account based on trusted sources."
+                "message": "This is a verified real account based on trusted sources.",
+                "note": restriction_reason
             }), 200
 
+        # 🧠 Proceed to real-time feature extraction
         features = extract_features(username)
 
         if features == "USER_NOT_FOUND":
@@ -213,7 +218,8 @@ def admin_profile_results(user):
                 "prediction": doc.get("prediction", ""),
                 "model_version": doc.get("model_version", MODEL_VERSION),
                 "confidence": doc.get("confidence", 0),
-                "timestamp": doc.get("timestamp").isoformat() if doc.get("timestamp") else None
+                "timestamp": doc.get("timestamp").isoformat() if doc.get("timestamp") else None,
+                "note": doc.get("note", None)  # include reason if it exists
             })
 
         return jsonify(output), 200

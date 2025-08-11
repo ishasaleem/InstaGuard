@@ -12,6 +12,7 @@ export default function CheckUsername() {
   const [predictionResult, setPredictionResult] = useState<{
     prediction: "Fake" | "Real";
     username: string;
+    message?: string;
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +59,7 @@ export default function CheckUsername() {
       setPredictionResult({
         prediction: result.prediction === "Fake" ? "Fake" : "Real",
         username: result.username,
+        message: result.message,
       });
     } catch (error: any) {
       console.error("Prediction failed:", error);
@@ -66,6 +68,10 @@ export default function CheckUsername() {
       setLoading(false);
     }
   };
+
+  const isGeoRestricted = predictionResult?.message?.toLowerCase().includes(
+    "verified real account based on trusted sources"
+  );
 
   return (
     <div className="bg-gradient-to-b from-white to-[#ffeef3] py-16 min-h-screen relative overflow-hidden">
@@ -116,7 +122,11 @@ export default function CheckUsername() {
             placeholder="Enter Instagram Username"
             className="border-2 border-pink-300 rounded-2xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-pink-400"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setPredictionResult(null);
+              setErrorMessage("");
+            }}
           />
           <button
             onClick={handleCheckProfile}
@@ -129,26 +139,45 @@ export default function CheckUsername() {
           </button>
         </motion.div>
 
-        {/* Result */}
+        {/* Result Display */}
         {predictionResult && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
             className={`mt-10 text-center bg-white rounded-xl shadow-md px-6 py-6 max-w-xl mx-auto border-l-4 ${
-              predictionResult.prediction === "Fake" ? "border-red-600" : "border-green-600"
+              predictionResult.prediction === "Fake"
+                ? "border-red-600"
+                : isGeoRestricted
+                ? "border-yellow-500"
+                : "border-green-600"
             }`}
           >
-            <h2 className={`text-2xl font-bold ${
-              predictionResult.prediction === "Fake" ? "text-red-700" : "text-green-700"
-            }`}>
+            <h2
+              className={`text-2xl font-bold ${
+                predictionResult.prediction === "Fake"
+                  ? "text-red-700"
+                  : isGeoRestricted
+                  ? "text-yellow-700"
+                  : "text-green-700"
+              }`}
+            >
               {predictionResult.prediction === "Fake"
                 ? "⚠️ Fake Profile"
+                : isGeoRestricted
+                ? "🌐 Geo-Restricted Account"
                 : "✅ Real Profile"}
             </h2>
+
             <p className="mt-2 text-gray-700 text-lg">
               Username: <span className="font-semibold">{predictionResult.username}</span>
             </p>
+
+            {predictionResult.message && (
+              <p className="mt-4 text-gray-600 text-base">
+                <span className="font-semibold">Note:</span> {predictionResult.message}
+              </p>
+            )}
           </motion.div>
         )}
 
