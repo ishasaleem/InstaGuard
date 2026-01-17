@@ -2,7 +2,7 @@
 ### Fake Instagram Profile Detection System
 
 InstaGuard is an AI-powered web application designed to identify fake Instagram profiles using machine learning, behavioral analysis, and profile metadata. The system helps detect suspicious accounts and improves trust and security on social platforms.
-
+LIVE AT: https://viberank.dev/apps/InstaGuard
 ---
 
 ## 🔍 Problem Statement
@@ -81,3 +81,4 @@ The system uses machine learning models to classify profiles as **Real** or **Fa
 Frontend Developer | Software Engineer  
 GitHub: https://github.com/ishasaleem  
 LinkedIn: https://linkedin.com/in/isha-saleem-162200250
+
